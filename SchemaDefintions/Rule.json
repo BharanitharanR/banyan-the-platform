@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://your-platform.dev/schemas/rule.schema.json",
+  "$id": "https://bharanitharan-WIP/schemas/rule.schema.json",
   "title": "RuleDefinition",
   "type": "object",
   "required": ["kind", "id", "version", "spec"],
