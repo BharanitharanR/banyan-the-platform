@@ -1,53 +1,113 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bharanitharan-WIP/schemas/rule.schema.json",
+  "$id": "https://project-banyan.dev/schemas/rule.schema.json",
   "title": "RuleDefinition",
   "type": "object",
-  "required": ["kind", "id", "version", "spec"],
+  "required": ["kind", "id", "version", "status", "spec"],
   "additionalProperties": false,
+
   "properties": {
     "kind": {
       "type": "string",
       "const": "Rule",
-      "description": "Identifies this definition as a Rule"
+      "description": "Identifies this definition as a Rule (atomic or composite)"
     },
+
     "id": {
       "type": "string",
       "pattern": "^[a-zA-Z][a-zA-Z0-9_\\-]{2,100}$",
       "description": "Globally unique rule identifier"
     },
+
     "version": {
       "type": "integer",
       "minimum": 1,
-      "description": "Immutable version number of the rule"
+      "description": "Immutable version of the rule"
     },
+
+    "status": {
+      "type": "string",
+      "enum": ["DRAFT", "ACTIVE", "DEPRECATED"],
+      "description": "Lifecycle state controlling validation and runtime eligibility"
+    },
+
     "spec": {
       "type": "object",
-      "required": ["type", "input", "operator", "value"],
+      "required": ["mode", "resultType"],
       "additionalProperties": false,
+
       "properties": {
-        "type": {
+        "mode": {
           "type": "string",
-          "description": "Rule evaluation type (e.g., THRESHOLD, RANGE, DURATION)"
+          "enum": ["ATOMIC", "COMPOSITE"],
+          "description": "Declares whether this rule is atomic or a composite ruleset"
         },
-        "input": {
+
+        "resultType": {
           "type": "string",
-          "description": "Name of the input metric or derived evidence field"
-        },
-        "operator": {
-          "type": "string",
-          "enum": ["<", "<=", ">", ">=", "==", "!="],
-          "description": "Comparison operator used by the rule"
-        },
-        "value": {
-          "description": "Comparison value for the rule",
-          "oneOf": [
-            { "type": "number" },
-            { "type": "string" },
-            { "type": "boolean" }
-          ]
+          "enum": ["BOOLEAN", "NUMBER", "SCORE"],
+          "description": "Type of result produced by evaluating this rule"
         }
-      }
+      },
+
+      "allOf": [
+        {
+          "if": {
+            "properties": { "mode": { "const": "ATOMIC" } }
+          },
+          "then": {
+            "required": ["type", "input", "operator", "value"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Atomic rule type (e.g., THRESHOLD, RANGE)"
+              },
+              "input": {
+                "type": "string",
+                "description": "Evidence metric name evaluated by this rule"
+              },
+              "operator": {
+                "type": "string",
+                "enum": ["<", "<=", ">", ">=", "==", "!="],
+                "description": "Comparison operator"
+              },
+              "value": {
+                "oneOf": [
+                  { "type": "number" },
+                  { "type": "string" },
+                  { "type": "boolean" }
+                ],
+                "description": "Comparison value"
+              }
+            }
+          }
+        },
+
+        {
+          "if": {
+            "properties": { "mode": { "const": "COMPOSITE" } }
+          },
+          "then": {
+            "required": ["aggregation", "children"],
+            "properties": {
+              "aggregation": {
+                "type": "string",
+                "enum": ["ALL", "ANY"],
+                "description": "Logical aggregation strategy"
+              },
+              "children": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "description": "Referenced rule IDs (atomic or composite)"
+                },
+                "description": "Child rules evaluated by this composite rule"
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

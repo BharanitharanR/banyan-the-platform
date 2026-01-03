@@ -1,10 +1,10 @@
-# Rule Definition DSL
+# Rule Definition DSL (Project Banyan)
 
 ## Overview
 
-A **Rule** defines **how evidence is evaluated** within the platform.
+A **Rule** defines **how evidence is evaluated** within Project Banyan.
 
-Rules are the smallest executable units in the system and are designed to be:
+Rules are the **smallest executable logic units** in the platform and are designed to be:
 
 * Typed
 * Parameterized
@@ -12,7 +12,8 @@ Rules are the smallest executable units in the system and are designed to be:
 * Reusable
 * Immutable once versioned
 
-Rules contain **no executable code** and are evaluated by the framework’s rule engine.
+Rules contain **no executable code**.
+They are **pure metadata** and are evaluated by the Project Banyan rule engine at runtime.
 
 ---
 
@@ -23,11 +24,14 @@ Rules contain **no executable code** and are evaluated by the framework’s rule
   "kind": "Rule",
   "id": "<string>",
   "version": <integer>,
+  "status": "DRAFT | ACTIVE | DEPRECATED",
   "spec": {
+    "mode": "ATOMIC",
     "type": "<string>",
     "input": "<string>",
     "operator": "<operator>",
-    "value": "<literal>"
+    "value": "<literal>",
+    "resultType": "BOOLEAN"
   }
 }
 ```
@@ -66,9 +70,27 @@ Rules contain **no executable code** and are evaluated by the framework’s rule
 
 ---
 
+### status
+
+* **Type:** enum
+* **Allowed Values:** `DRAFT`, `ACTIVE`, `DEPRECATED`
+* **Purpose:** Controls lifecycle, validation strictness, and runtime eligibility
+
+---
+
 ### spec
 
 Container for rule behavior parameters.
+
+---
+
+#### spec.mode
+
+* **Type:** enum
+* **Allowed Values:** `ATOMIC`
+* **Purpose:** Declares the rule as an atomic (non-composite) rule
+
+> Composite logic is defined using **Rulesets**, not atomic rules.
 
 ---
 
@@ -83,7 +105,7 @@ Container for rule behavior parameters.
   * `DURATION`
   * `COUNT`
 
-⚠️ Must correspond to a registered rule type in the Rule Type Registry.
+⚠️ Must correspond to a registered rule type in the **Rule Type Registry**.
 
 ---
 
@@ -120,15 +142,24 @@ Container for rule behavior parameters.
 
 ---
 
+#### spec.resultType
+
+* **Type:** enum
+* **Allowed Values:** `BOOLEAN`
+* **Purpose:** Declares the output type of rule evaluation
+
+---
+
 ## Semantic Constraints (Compiler-Enforced)
 
-The following rules are enforced by the ingestion compiler and **not** by JSON Schema:
+The following constraints are enforced by the **ingestion compiler**, not by JSON Schema:
 
 * `type` must be registered in the Rule Type Registry
-* `input` must exist in the Evidence Schema
+* `input` must exist in the Evidence Type registry
 * `operator` must be valid for the given rule type
 * `value` must be compatible with the input’s data type
 * Rules must be deterministic and side-effect free
+* Only `ACTIVE` rules may be compiled into the runtime AST
 
 ---
 
@@ -139,11 +170,14 @@ The following rules are enforced by the ingestion compiler and **not** by JSON S
   "kind": "Rule",
   "id": "speed_threshold_rule",
   "version": 1,
+  "status": "ACTIVE",
   "spec": {
+    "mode": "ATOMIC",
     "type": "THRESHOLD",
     "input": "speed_over_limit_seconds",
     "operator": "<=",
-    "value": 10
+    "value": 10,
+    "resultType": "BOOLEAN"
   }
 }
 ```
@@ -155,23 +189,25 @@ The total time spent exceeding the speed limit must be less than or equal to 10 
 
 ## Design Rationale
 
-Rules are intentionally:
+Atomic rules are intentionally:
 
 * Simple
 * Typed
 * Parameterized
 
-This design avoids:
+This design explicitly avoids:
 
 * Expression parsing
+* Embedded logic
 * Injection risks
 * Non-deterministic behavior
 * Debugging complexity
 
-More complex logic is achieved through **Rulesets**, not individual rules.
+More complex logic is expressed through **Rulesets**, which compose atomic rules into executable logic trees.
 
 ---
 
 ## One Line to Remember
 
-> **A Rule is a typed predicate over evidence.**
+> **A Rule is a typed, deterministic predicate over evidence.**
+
