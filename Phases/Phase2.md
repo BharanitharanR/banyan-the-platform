@@ -1,6 +1,6 @@
 # PHASE2_PLAN.md
 
-**Project Banyan – Phase 2 (Compiler & DSL)**
+**Project Banyan – Phase 2 (Compiler, DSL & Validation Pipeline)**
 
 ---
 
@@ -19,8 +19,9 @@ Phase 2 introduces **authoring-time capabilities**, not runtime behavior.
 Specifically, Phase 2 delivers:
 
 * DSL definitions (JSON)
-* Structural validation
-* Semantic validation
+* Structural validation (Schema)
+* Semantic validation (Correctness)
+* Linting (Quality & guidance)
 * AST construction
 * AST serialization
 * CLI-based compilation
@@ -56,14 +57,16 @@ If a task smells like “product”, it is **out of scope**.
 
 ---
 
-## High-Level Architecture
+## High-Level Architecture (Revised & Locked)
 
 ```
 DSL (JSON)
   ↓
-Schema Validation
+Schema Validation      (Structure)
   ↓
-Semantic Validation
+Semantic Validation    (Correctness)
+  ↓
+Linting                (Quality & Guidance)
   ↓
 AST Builder
   ↓
@@ -72,11 +75,89 @@ AST Serializer
 Serialized AST Artifact
 ```
 
-Runtime consumes the artifact **as-is**.
+* **Errors** block compilation
+* **Lint warnings** do not block compilation (by default)
+* Runtime consumes the artifact **as-is**
 
 ---
 
-## Module Structure (Recommended, Not Optional)
+## Validation Stack – Responsibility Split (Authoritative)
+
+### 1️⃣ Schema Validator — Structure
+
+**Purpose**
+
+* Enforce required fields
+* Enforce field types
+* Enforce enum constraints
+
+**Characteristics**
+
+* Mechanical
+* Deterministic
+* No domain interpretation
+
+**Outcome**
+
+* ❌ Schema errors → compilation fails
+
+---
+
+### 2️⃣ Semantic Validator — Correctness
+
+**Purpose**
+
+* Enforce logical invariants
+* Prevent undefined runtime behavior
+
+**Examples**
+
+* Rule references must exist
+* No cyclic rule dependencies
+* Task must reference a valid ruleset
+* Challenge must include ≥ 1 task
+* ResultType compatibility between rules and rulesets
+
+**Outcome**
+
+* ❌ Semantic errors → compilation fails
+
+> If runtime would not know what to do → it is a semantic error.
+
+---
+
+### 3️⃣ Linter — Quality & Guidance (First-Class Component)
+
+**Purpose**
+
+* Surface design smells
+* Encourage best practices
+* Guide authors without blocking them
+
+**Examples**
+
+* Deeply nested rulesets
+* Unused evidence fields
+* Duplicate rule semantics
+* Overly broad rulesets
+* Poor naming conventions
+* Suspicious version gaps
+
+**Characteristics**
+
+* Advisory
+* Non-blocking by default
+* Evolvable over time
+
+**Outcome**
+
+* ⚠️ Lint findings → warnings only (configurable later)
+
+> **Correctness must fail. Quality must guide.**
+
+---
+
+## Module Structure (Updated & Locked)
 
 ```
 banyan-compiler/
@@ -87,15 +168,22 @@ banyan-compiler/
 │   ├── challenge.schema.json
 │   └── evidence.schema.json
 │
+├── schema/
+│   └── JsonSchemaValidator.java
+│
+├── semantics/
+│   └── SemanticValidator.java
+│
+├── lint/
+│   ├── LintRule.java
+│   ├── LintFinding.java
+│   └── BanyanLinter.java
+│
 ├── compiler/
-│   ├── SchemaValidator.java
-│   ├── SemanticValidator.java
-│   ├── AstBuilder.java
-│   ├── CompilationError.java
-│   └── CompilationResult.java
+│   └── AstBuilder.java
 │
 ├── ast/
-│   ├── (shared AST classes from Phase 1)
+│   └── (shared AST classes from Phase 1)
 │
 ├── serializer/
 │   ├── AstSerializer.java
@@ -114,84 +202,64 @@ banyan-compiler/
 
 ### 1️⃣ DSL Definitions (JSON)
 
-You will support **only what Phase 1 runtime can execute**.
+Support **only what Phase 1 runtime can execute**:
 
-* Task DSL
+* EvidenceType DSL
 * Rule DSL
 * Ruleset DSL
+* Task DSL
 * Challenge DSL
-* EvidenceType DSL
 
 No optional fields unless absolutely required.
 
 ---
 
-### 2️⃣ Schema Validation (Structural)
+### 2️⃣ Compiler Pipeline
 
-Purpose:
+Compiler execution order is **fixed**:
 
-* Fail fast on malformed input
-* Enforce required fields
-* Enforce field types
+1. Schema validation
+2. Semantic validation
+3. Linting
+4. AST construction
+5. AST serialization
 
-Rules:
-
-* JSON Schema only
-* No custom logic here
-* All errors must be explicit
+Any deviation is a design error.
 
 ---
 
-### 3️⃣ Semantic Validation (Critical)
+### 3️⃣ AST Builder (Core of Phase 2)
 
-Purpose:
-
-* Enforce *meaning*, not structure
-
-Examples:
-
-* Rule references must exist
-* No cyclic rule references
-* Task must reference valid ruleset
-* Challenge must include ≥1 task
-* ResultType compatibility
-
-This is where most real systems fail — treat it seriously.
-
----
-
-### 4️⃣ AST Builder (Core of Phase 2)
-
-Responsibility:
+**Responsibility**
 
 * Transform validated DSL into **exact Phase-1 AST objects**
 
-Rules:
+**Rules**
 
 * Reuse `RuleNode`, `TaskNode`, `CompiledChallenge`
 * No new runtime abstractions
-* No shortcuts
+* No execution logic
 
-If you cannot feed the output directly into `RuntimeEvaluator`, it’s wrong.
+If output cannot be fed directly into `RuntimeEvaluator`, it is wrong.
 
 ---
 
-### 5️⃣ AST Serialization
+### 4️⃣ AST Serialization
 
-Purpose:
+**Purpose**
 
 * Persist compiled challenges
 * Enable runtime rehydration
 
-Rules:
+**Rules**
 
 * Deterministic format (JSON or binary)
-* Versioned
-* No runtime logic inside serialization
+* Explicit versioning
+* No runtime logic embedded
 
 ---
 
-### 6️⃣ CLI Compiler (Minimal)
+### 5️⃣ CLI Compiler (Minimal)
 
 Example usage:
 
@@ -201,11 +269,11 @@ banyan-compile \
   --output sample-challenge.ast.json
 ```
 
-Rules:
+**Rules**
 
 * No interactive prompts
-* Fail loudly
-* Human-readable errors
+* Fail loudly on errors
+* Human-readable error and lint output
 
 ---
 
@@ -214,7 +282,9 @@ Rules:
 Phase 2 is **DONE** only if all are true:
 
 * [ ] DSL → AST compilation works
-* [ ] Invalid DSL fails with clear errors
+* [ ] Schema errors fail clearly
+* [ ] Semantic errors fail clearly
+* [ ] Lint warnings are surfaced but non-blocking
 * [ ] Serialized AST can be deserialized
 * [ ] RuntimeEvaluator runs unchanged
 * [ ] End-to-end demo works with DSL-defined challenge
@@ -234,13 +304,11 @@ If not done by then:
 
 ---
 
-## Phase 2 Anti-Rabbit-Hole Rules
-
-These are **mandatory**:
+## Phase 2 Anti–Rabbit-Hole Rules (Mandatory)
 
 1. If runtime needs modification → stop and reassess
 2. If DSL becomes “expressive” → stop
-3. If you feel tempted to add “just one more feature” → park it
+3. If lint rules become mandatory correctness checks → stop
 4. If error handling feels complex → simplify DSL
 
 ---
@@ -249,33 +317,10 @@ These are **mandatory**:
 
 Phase 2 demonstrates that you can:
 
-* Design compile-time systems
-* Separate authoring from execution
-* Enforce semantics, not just syntax
+* Design compiler pipelines
+* Separate structure, correctness, and quality
+* Enforce semantics without overreach
 * Preserve architectural boundaries
-* Deliver evolvable platforms
+* Build platforms others can safely extend
 
-This is **Staff / Principal-level skill**.
-
----
-
-## What Comes After (Not Now)
-
-Phase 3 may include:
-
-* Runtime hydration
-* Explainability
-* Persistence
-* Deployment models
-* Scoring
-
-But **none of that exists** until Phase 2 is DONE.
-
----
-
-## Final Rule (Read This)
-
-> **Phase 2 exists to protect Phase 1 from change.**
-
-If Phase 1 remains untouched, Phase 2 succeeded.
-
+This is **Staff / Principal-level capability**.

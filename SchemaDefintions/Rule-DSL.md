@@ -23,7 +23,7 @@ They are **pure metadata** and are evaluated by the Project Banyan rule engine a
 {
   "kind": "Rule",
   "id": "<string>",
-  "version": <integer>,
+  "version": "<integer>",
   "status": "DRAFT | ACTIVE | DEPRECATED",
   "spec": {
     "mode": "ATOMIC",

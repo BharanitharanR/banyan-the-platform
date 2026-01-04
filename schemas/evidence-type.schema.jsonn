@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banyan.dev/schemas/evidence-type.schema.json",
+  "title": "EvidenceTypeDefinition",
+  "type": "object",
+  "required": ["kind", "id", "version", "status", "spec"],
+  "additionalProperties": false,
+
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "EvidenceType",
+      "description": "Identifies this definition as an EvidenceType"
+    },
+
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,100}$",
+      "description": "Globally unique identifier for the evidence type"
+    },
+
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Immutable version number of the evidence type"
+    },
+
+    "status": {
+      "type": "string",
+      "enum": ["DRAFT", "ACTIVE", "DEPRECATED"],
+      "description": "Lifecycle status of the evidence type"
+    },
+
+    "spec": {
+      "type": "object",
+      "required": ["fields"],
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/fieldDefinition"
+          },
+          "description": "List of evidence fields exposed by this evidence type"
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "fieldDefinition": {
+      "type": "object",
+      "required": ["name", "type", "required"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_]{1,100}$",
+          "description": "Field name used by rules as input"
+        },
+
+        "type": {
+          "type": "string",
+          "enum": ["BOOLEAN", "INTEGER", "DECIMAL", "STRING", "DURATION"],
+          "description": "Primitive data type of the evidence field"
+        },
+
+        "required": {
+          "type": "boolean",
+          "description": "Whether this field must be present in runtime evidence"
+        }
+      }
+    }
+  }
+}

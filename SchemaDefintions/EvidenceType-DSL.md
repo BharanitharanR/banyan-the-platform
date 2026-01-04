@@ -36,7 +36,7 @@ Without EvidenceType:
 {
   "kind": "EvidenceType",
   "id": "<string>",
-  "version": <integer>,
+  "version": "<integer>",
   "status": "DRAFT | ACTIVE | DEPRECATED",
   "spec": {
     "metrics": {
