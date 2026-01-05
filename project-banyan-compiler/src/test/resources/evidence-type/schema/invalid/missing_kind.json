@@ -1,0 +1,19 @@
+{
+  "id": "MISSING_KIND",
+  "version": 1,
+  "status": "ACTIVE",
+  "spec": {
+    "fields": [
+      {
+        "name": "x",
+        "type": "INTEGER",
+        "required": true
+      },
+      {
+        "name": "x",
+        "type": "INTEGER",
+        "required": true
+      }
+    ]
+  }
+}

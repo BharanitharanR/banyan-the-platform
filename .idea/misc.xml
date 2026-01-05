@@ -5,6 +5,7 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/project-banyan/pom.xml" />
+        <option value="$PROJECT_DIR$/project-banyan-compiler/pom.xml" />
       </list>
     </option>
   </component>

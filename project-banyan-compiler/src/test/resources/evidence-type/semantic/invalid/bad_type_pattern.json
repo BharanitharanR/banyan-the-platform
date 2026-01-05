@@ -1,0 +1,15 @@
+{
+  "kind": "EvidenceType",
+  "id": "bad_id",
+  "version": 1,
+  "status": "ACTIVE",
+  "spec": {
+    "fields": [
+      {
+        "name": "x",
+        "type": "FLOAT",
+        "required": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+package com.banyan.compiler.semantics;
+
+import com.banyan.compiler.testutil.JsonAssert;
+import com.banyan.compiler.testutil.TestResourceLoader;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class EvidenceTypeSematicValidatorTest {
+    private static final EvidenceTypeSemanticValidator validator = new EvidenceTypeSemanticValidator();
+
+    private static final String VALID_RESOURCE = "evidence-type/semantic/valid";
+    private static final String INVALID_RESOURCE = "evidence-type/semantic/invalid";
+    @Test
+    void allValidEvidenceTypesShouldPass() {
+        List<String> jsons =
+                TestResourceLoader.loadJsonFiles(VALID_RESOURCE);
+
+        for (String json : jsons) {
+            List<String> errors = validator.validate(json);
+            assertTrue(errors.isEmpty(), "Expected no errors but got: " + errors);
+        }
+    }
+
+    @Test
+    void allInvalidEvidenceTypesShouldFail() {
+        List<String> jsons =
+                TestResourceLoader.loadJsonFiles(INVALID_RESOURCE);
+
+        for (String json : jsons) {
+            List<String> errors = validator.validate(json);
+            assertFalse(errors.isEmpty(), "Expected errors but got none");
+        }
+    }
+
+    @Test
+    void validateSpecificFields() {
+        String json = TestResourceLoader
+                .loadJsonFiles(VALID_RESOURCE)
+                .getFirst();
+
+        JsonAssert assertJson = new JsonAssert(json);
+
+        assertJson.assertFieldExists("/spec/fields/0/name");
+        assertJson.assertBooleanTrue("/spec/fields/0/required");
+        assertJson.assertEquals("/kind", "EvidenceType");
+    }
+
+}

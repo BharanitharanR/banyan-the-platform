@@ -1,0 +1,15 @@
+{
+  "kind": "EvidenceType",
+  "id": "ZERO_VERSION",
+  "version": 0,
+  "status": "ACTIVE",
+  "spec": {
+    "fields": [
+      {
+        "name": "x",
+        "type": "INTEGER",
+        "required": true
+      }
+    ]
+  }
+}
