@@ -1,56 +1,72 @@
 # Ruleset Definition DSL
 
-**Project Banyan**
-
----
-
 ## Overview
 
-A **Ruleset** defines **how multiple rules are composed** to produce a single logical outcome.
+A **Ruleset** defines **how individual Rules are composed** into a single logical expression.
 
-In Project Banyan, a Ruleset is **not a separate primitive**.
-Instead, a Ruleset is a **composite Rule**, expressed using the same `Rule` envelope with a different execution mode.
+A Ruleset does **not** introduce new evaluation logic.
+It exists purely to **combine Rules deterministically** using boolean logic.
 
-> **A Ruleset is a composite rule whose evaluation result is derived from one or more child rules.**
+> **A Ruleset is a boolean expression tree over Rules.**
 
-Rulesets are designed to be:
+---
 
-* Purely declarative
+## Design Intent
+
+Rulesets exist to:
+
+* Compose simple rules into complex conditions
+* Enable reuse of rules across multiple tasks
+* Keep individual rules atomic and focused
+* Preserve determinism and explainability
+
+Rulesets are **compiled**, not interpreted at runtime.
+
+---
+
+## Core Characteristics
+
+Rulesets are:
+
+* Declarative
 * Deterministic
-* Reusable across tasks and challenges
 * Immutable once versioned
-* Independent of users, persistence, or execution timing
+* Purely compositional
+* Reusable across Tasks and Challenges
 
-Rulesets contain **no executable code** and are compiled into **AST nodes** by the ingestion compiler.
-
----
-
-## Relationship to Rules and AST
-
-Conceptually:
-
-```
-Rule (ATOMIC)     → Leaf AST node
-Rule (COMPOSITE)  → Parent AST node (Ruleset)
-```
-
-At runtime, both atomic rules and rulesets are evaluated uniformly as nodes in a logic tree.
+Rulesets are **not executable by themselves**.
 
 ---
 
-## Structure
+## What a Ruleset Can Do
+
+✅ Reference existing Rules
+✅ Combine Rules using logical operators
+✅ Nest logical expressions arbitrarily
+✅ Evaluate to a single boolean outcome
+
+---
+
+## What a Ruleset Cannot Do
+
+❌ Define thresholds
+❌ Define operators
+❌ Access evidence directly
+❌ Reference Tasks or Challenges
+❌ Execute logic
+❌ Perform cross-artifact resolution (Phase 3)
+
+---
+
+## JSON Structure
 
 ```json
 {
-  "kind": "Rule",
+  "kind": "Ruleset",
   "id": "<string>",
   "version": <integer>,
-  "status": "DRAFT | ACTIVE | DEPRECATED",
   "spec": {
-    "mode": "COMPOSITE",
-    "aggregation": "<aggregation>",
-    "children": ["<rule-id>", "..."],
-    "resultType": "<result-type>"
+    "expression": <expression>
   }
 }
 ```
@@ -62,8 +78,8 @@ At runtime, both atomic rules and rulesets are evaluated uniformly as nodes in a
 ### kind
 
 * **Type:** string
-* **Value:** Must be `"Rule"`
-* **Purpose:** Identifies the definition as a Rule (atomic or composite)
+* **Value:** `"Ruleset"`
+* **Purpose:** Identifies the DSL type
 
 ---
 
@@ -72,9 +88,10 @@ At runtime, both atomic rules and rulesets are evaluated uniformly as nodes in a
 * **Type:** string
 * **Constraints:**
 
-    * Alphanumeric characters, underscores, hyphens
-    * Must be globally unique
-* **Purpose:** Canonical identifier for the ruleset
+  * lowercase alphanumeric
+  * underscores and hyphens allowed
+  * globally unique within Rulesets
+* **Purpose:** Canonical identifier
 
 ---
 
@@ -83,126 +100,181 @@ At runtime, both atomic rules and rulesets are evaluated uniformly as nodes in a
 * **Type:** integer
 * **Constraints:**
 
-    * Must be ≥ 1
-    * Immutable once published
-* **Purpose:** Enables versioned evolution without breaking historical evaluations
-
----
-
-### status
-
-* **Type:** enum
-* **Allowed Values:** `DRAFT`, `ACTIVE`, `DEPRECATED`
-* **Purpose:** Controls lifecycle, validation strictness, and runtime eligibility
+  * must be ≥ 1
+  * immutable once published
+* **Purpose:** Enables safe evolution
 
 ---
 
 ### spec
 
-Container for ruleset behavior parameters.
+Container for Ruleset behavior.
 
 ---
 
-#### spec.mode
+### spec.expression
 
-* **Type:** enum
-* **Allowed Values:** `COMPOSITE`
-* **Purpose:** Declares this rule as a composite rule (Ruleset)
+Defines the logical structure of the Ruleset.
 
----
-
-#### spec.aggregation
-
-* **Type:** enum
-* **Allowed Values:**
-
-    * `ALL` — logical AND
-    * `ANY` — logical OR
-* **Purpose:** Defines how child rule results are combined
+The expression is **recursive** and evaluates to a boolean.
 
 ---
 
-#### spec.children
+## Expression Model
 
-* **Type:** array of strings
+An expression can be **one of two types**:
+
+### 1️⃣ Rule Reference Node
+
+References an existing Rule by ID.
+
+```json
+{
+  "ruleRef": "rule_id"
+}
+```
+
+* Must reference a valid Rule (checked in Phase 3)
+* Represents a leaf node in the expression tree
+
+---
+
+### 2️⃣ Logical Node
+
+Combines expressions using boolean logic.
+
+```json
+{
+  "operator": "AND",
+  "operands": [ <expression>, <expression>, ... ]
+}
+```
+
+#### operator
+
+* **Allowed values:** `AND`, `OR`
+* Determines how operands are combined
+
+#### operands
+
+* **Type:** array of expressions
 * **Constraints:**
 
-    * Must contain at least one entry
-    * Each entry must reference a valid Rule ID
-* **Purpose:** Ordered list of child rules evaluated by this ruleset
+  * minimum 2 operands
+* Each operand may itself be:
 
-Child rules may be:
-
-* Atomic rules
-* Other composite rules (nested rulesets)
+  * a ruleRef
+  * another logical node
 
 ---
 
-#### spec.resultType
+## Composite Rulesets
 
-* **Type:** enum
-* **Allowed Values:** `BOOLEAN`, `NUMBER`, `SCORE`
-* **Purpose:** Declares the output type of the ruleset evaluation
+Rulesets support **structural composition** via nesting.
+
+Example:
+
+```json
+{
+  "operator": "OR",
+  "operands": [
+    {
+      "operator": "AND",
+      "operands": [
+        { "ruleRef": "max_failed_attempts" },
+        { "ruleRef": "within_business_hours" }
+      ]
+    },
+    {
+      "ruleRef": "ip_not_blacklisted"
+    }
+  ]
+}
+```
+
+This forms a **single boolean expression tree**.
 
 ---
 
 ## Semantic Constraints (Compiler-Enforced)
 
-The following constraints are enforced by the **Project Banyan ingestion compiler**, not by JSON Schema:
+These rules are enforced by the compiler, not JSON Schema:
 
-* All referenced child rules must exist
-* Cyclic rule references are forbidden
-* All child rules must produce compatible result types
-* Aggregation strategy must be valid for the declared `resultType`
-* Only `ACTIVE` rulesets may be compiled into the runtime AST
-* Rulesets must be deterministic and side-effect free
+* Expression must not be empty
+* Logical nodes must have ≥ 2 operands
+* Operators must be valid
+* Ruleset must evaluate to a boolean
+* No execution logic inside Ruleset
+* No evidence access
+
+⚠️ Cross-artifact validation (rule existence, cycles) is **deferred to Phase 3**.
 
 ---
 
-## Example: Composite Ruleset
+## Evaluation Semantics
+
+At runtime:
+
+* Each `ruleRef` is evaluated independently
+* Logical nodes combine results deterministically
+* Evaluation order is defined by the AST
+* No side effects are permitted
+
+---
+
+## Example Ruleset
 
 ```json
 {
-  "kind": "Rule",
-  "id": "safe_login_ruleset",
+  "kind": "Ruleset",
+  "id": "login_security_ruleset",
   "version": 1,
-  "status": "ACTIVE",
   "spec": {
-    "mode": "COMPOSITE",
-    "aggregation": "ALL",
-    "children": [
-      "failed_attempts_rule",
-      "business_hours_rule"
-    ],
-    "resultType": "BOOLEAN"
+    "expression": {
+      "operator": "AND",
+      "operands": [
+        { "ruleRef": "max_failed_attempts" },
+        { "ruleRef": "within_business_hours" }
+      ]
+    }
   }
 }
 ```
 
 **Meaning:**
-A login attempt is considered safe if **all** child rules evaluate to true.
+A login attempt is valid only if:
+
+* failed attempts are within limits
+* the action occurs during business hours
 
 ---
 
 ## Design Rationale
 
-Rulesets are intentionally designed to:
+Rulesets deliberately:
 
-* Express **composition**, not domain intent
-* Remain agnostic of tasks, challenges, and users
-* Compile cleanly into AST parent nodes
-* Enable explanation and traceability through tree traversal
+* Separate composition from logic
+* Avoid cross-artifact coupling
+* Preserve explainability
+* Enable static compilation into ASTs
 
-This design explicitly avoids:
+This design prevents:
 
-* Embedded control flow
-* Conditional scripting
-* Side effects
-* Runtime branching logic
-* Domain-specific assumptions
+* implicit dependencies
+* hidden execution paths
+* runtime surprises
 
 ---
 
 ## One Line to Remember
 
-> **A Ruleset is a composite rule that defines how multiple rules are combined to produce a single outcome.**
+> **A Ruleset is a deterministic boolean expression over Rules.**
+
+---
+
+## Phase Boundary Note
+
+Ruleset-to-Ruleset references (`rulesetRef`)
+are **explicitly deferred to Phase 3**.
+
+Phase 2 supports **structural composition only**.

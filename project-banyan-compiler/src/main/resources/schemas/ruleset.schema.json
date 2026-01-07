@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banyan.dev/schemas/ruleset.schema.json",
+  "title": "RulesetDefinition",
+  "type": "object",
+  "required": ["kind", "id", "version", "spec"],
+  "additionalProperties": false,
+
+  "properties": {
+    "kind": {
+      "type": "string",
+      "const": "Ruleset"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_\\-]{2,100}$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "spec": {
+      "type": "object",
+      "required": ["expression"],
+      "additionalProperties": false,
+      "properties": {
+        "expression": {
+          "$ref": "#/$defs/expression"
+        }
+      }
+    }
+  },
+
+  "$defs": {
+    "expression": {
+      "oneOf": [
+        { "$ref": "#/$defs/ruleRefNode" },
+        { "$ref": "#/$defs/logicalNode" }
+      ]
+    },
+
+    "ruleRefNode": {
+      "type": "object",
+      "required": ["ruleRef"],
+      "additionalProperties": false,
+      "properties": {
+        "ruleRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+
+    "logicalNode": {
+      "type": "object",
+      "required": ["operator", "operands"],
+      "additionalProperties": false,
+      "properties": {
+        "operator": {
+          "type": "string",
+          "enum": ["AND", "OR"]
+        },
+        "operands": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/expression"
+          }
+        }
+      }
+    }
+  }
+}
