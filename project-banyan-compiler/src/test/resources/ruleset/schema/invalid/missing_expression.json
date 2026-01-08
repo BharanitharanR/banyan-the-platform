@@ -1,0 +1,6 @@
+{
+  "kind": "Ruleset",
+  "id": "missing_expression",
+  "version": 1,
+  "spec": {}
+}

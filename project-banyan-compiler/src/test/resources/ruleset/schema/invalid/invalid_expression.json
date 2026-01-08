@@ -1,0 +1,10 @@
+{
+  "kind": "Ruleset",
+  "id": "invalid_expression_node",
+  "version": 1,
+  "spec": {
+    "expression": {
+      "foo": "bar"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "Ruleset",
+  "id": "empty_ruleref",
+  "version": 1,
+  "spec": {
+    "expression": {
+      "ruleRef": ""
+    }
+  }
+}

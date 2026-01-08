@@ -1,0 +1,20 @@
+{
+  "kind": "Ruleset",
+  "id": "nested_invalid_expression",
+  "version": 1,
+  "spec": {
+    "expression": {
+      "operator": "AND",
+      "operands": [
+        { "ruleRef": "valid_rule" },
+        {
+          "operator": "OR",
+          "operands": [
+            { "ruleRef": "" },
+            { "foo": "bar" }
+          ]
+        }
+      ]
+    }
+  }
+}

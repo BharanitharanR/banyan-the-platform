@@ -1,0 +1,13 @@
+{
+  "kind": "Ruleset",
+  "id": "single_operand_and",
+  "version": 1,
+  "spec": {
+    "expression": {
+      "operator": "AND",
+      "operands": [
+        { "ruleRef": "only_rule" }
+      ]
+    }
+  }
+}

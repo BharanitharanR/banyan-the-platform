@@ -1,0 +1,14 @@
+{
+  "kind": "Ruleset",
+  "id": "invalid_operator",
+  "version": 1,
+  "spec": {
+    "expression": {
+      "operator": "NOT",
+      "operands": [
+        { "ruleRef": "rule1" },
+        { "ruleRef": "rule2" }
+      ]
+    }
+  }
+}

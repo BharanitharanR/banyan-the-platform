@@ -1,0 +1,10 @@
+{
+  "kind": "Ruleset",
+  "id": "single_rule_ruleset",
+  "version": 1,
+  "spec": {
+    "expression": {
+      "ruleRef": "max_failed_attempts"
+    }
+  }
+}
