@@ -1,0 +1,8 @@
+{
+  "kind": "Challenge",
+  "id": "login_challenge",
+  "version": 1,
+  "spec": {
+    "tasks": ["login_security_task"]
+  }
+}

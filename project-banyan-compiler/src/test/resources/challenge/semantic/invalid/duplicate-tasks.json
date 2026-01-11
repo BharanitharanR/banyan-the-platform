@@ -1,0 +1,11 @@
+{
+  "kind": "Challenge",
+  "id": "duplicate_task_challenge",
+  "version": 1,
+  "spec": {
+    "tasks": [
+      "task_one",
+      "task_one"
+    ]
+  }
+}

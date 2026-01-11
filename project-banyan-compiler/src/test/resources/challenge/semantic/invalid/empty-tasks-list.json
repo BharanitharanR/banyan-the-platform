@@ -1,0 +1,8 @@
+{
+  "kind": "Challenge",
+  "id": "empty_task_challenge",
+  "version": 1,
+  "spec": {
+    "tasks": []
+  }
+}

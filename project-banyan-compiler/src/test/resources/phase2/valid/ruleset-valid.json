@@ -1,0 +1,22 @@
+{
+  "kind": "Ruleset",
+  "id": "nested_ruleset",
+  "version": 1,
+  "spec": {
+    "expression": {
+      "operator": "OR",
+      "operands": [
+        {
+          "operator": "AND",
+          "operands": [
+            { "ruleRef": "max_failed_attempts" },
+            { "ruleRef": "within_business_hours" }
+          ]
+        },
+        {
+          "ruleRef": "ip_not_blacklisted"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "kind": "Challenge",
+  "id": "invalid_action_challenge",
+  "version": 1,
+  "spec": {
+    "tasks": ["task_one"],
+    "actions": [
+      { "emit": "LOCK_ACCOUNT" }
+    ]
+  }
+}
