@@ -16,45 +16,56 @@ import java.util.Map;
 
 public class RuleBackendCompiler extends AbstractBackendCompiler<CompiledRuleArtifact> {
     @Override
-    public CompiledRuleArtifact compile(JsonNode validatedDsl, CompilationContext context) {
-        String id = readId(validatedDsl);
-        int version = readVersion(validatedDsl);
+    public CompiledRuleArtifact compile(JsonNode dsl, CompilationContext context) {
+        String id = readId(dsl);
+        int version = readVersion(dsl);
+        CompilationMetadata metadata = metadata(dsl);
 
-        CompilationMetadata metadata = metadata(validatedDsl);
+        JsonNode spec = dsl.at("/spec");
 
-        JsonNode rule = validatedDsl.at("/spec");
+        // 1. Resolve EvidenceType
+        String evidenceId = spec.at("/evidenceTypeRef/id").asText();
+        int evidenceVersion = spec.at("/evidenceTypeRef/version").asInt();
 
-        JsonNode evidence = rule.get("evidenceTypeRef");
-        String evidenceId = evidence.at("/id").asText();
-        int evidenceVersion = evidence.at("/version").asInt();
+        CompiledEvidenceTypeArtifact evidenceArtifact =
+                (CompiledEvidenceTypeArtifact) context.resolve(
+                        ArtifactType.EvidenceType,
+                        evidenceId,
+                        evidenceVersion
+                );
 
-        try {
+        Map<String, EvidenceField> fields = evidenceArtifact.payload().fields();
 
-            context.resolve(
-                    ArtifactType.Rule,
-                    evidenceId,
-                    evidenceVersion
-            );
-        }
-        catch (CompilationException e)
-        {
+        // 2. Validate input exists
+        String input = spec.at("/input").asText();
+        EvidenceField field = fields.get(input);
+        if (field == null) {
             throw new CompilationException(
-                    CompilationErrorCode.MISSING_DEPENDENCY,
-                    ArtifactType.Rule,
-                    evidenceId,
-                    evidenceVersion,
-                    "Reference Evidence not found "+evidenceId+"@"+evidenceVersion
+                    CompilationErrorCode.INTERNAL_COMPILER_ERROR,
+                    "Field '" + input + "' not found in EvidenceType "
+                            + evidenceId + "@" + evidenceVersion
             );
         }
 
-        CompiledRule field =
-                new CompiledRule(
-                rule.get("input").asText(),
-                rule.get("operator").asText(),
-                extractValue(rule.get("value")),
-                rule.get("type").asText()
-        );
-        return new CompiledRuleArtifact(id,version,field,metadata);
+        // 3. Validate type matches EXACTLY
+        EvidenceValueType declaredType =
+                EvidenceValueType.valueOf(spec.at("/type").asText());
+
+        if (field.type() != declaredType) {
+            throw new CompilationException(
+                    CompilationErrorCode.INTERNAL_COMPILER_ERROR,
+                    "Rule type '" + declaredType
+                            + "' does not match EvidenceType field type '"
+                            + field.type() + "' for field '" + input + "'"
+            );
+        }
+            ;
+        return new CompiledRuleArtifact(id,version,    new CompiledRule(
+                input,
+                spec.get("operator").asText(),
+                extractValue(spec.get("value")),
+                spec.get("type").asText()
+        ),metadata);
     }
 
     private Object extractValue(JsonNode node) {
