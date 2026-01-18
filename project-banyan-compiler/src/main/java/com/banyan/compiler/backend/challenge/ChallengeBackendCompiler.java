@@ -1,5 +1,7 @@
 package com.banyan.compiler.backend.challenge;
 
+import com.banyan.compiler.backend.api.CompilationErrorCode;
+import com.banyan.compiler.backend.api.CompilationException;
 import com.banyan.compiler.backend.api.CompilationMetadata;
 import com.banyan.compiler.backend.api.CompiledArtifact;
 import com.banyan.compiler.backend.context.CompilationContext;
@@ -24,7 +26,13 @@ public class ChallengeBackendCompiler extends AbstractBackendCompiler<CompiledCh
         CompilationMetadata metadata = metadata(validatedDsl);
         JsonNode spec = validatedDsl.get("spec");
         if(spec.isMissingNode() || spec.isEmpty()) {
-            return null; // Will figure out a better return
+            throw new CompilationException(
+                    CompilationErrorCode.INTERNAL_COMPILER_ERROR,
+                    ArtifactType.Challenge,
+                    id,
+                    version,
+                    "Spec missing"
+            );
         }
         List<CompiledTaskRef> compiledTaskRefs = new ArrayList<>();
         JsonNode TaskRefs = spec.get("tasks");
@@ -34,19 +42,21 @@ public class ChallengeBackendCompiler extends AbstractBackendCompiler<CompiledCh
             int taskVersion = TaskRef.get("version").asInt();
             // HARD dependency check
             try {
-                CompiledArtifact<CompiledTaskArtifact> taskRef = context.resolve(
+                context.resolve(
                         ArtifactType.Task,
                         taskId,
                         taskVersion
                 );
-                if(Boolean.parseBoolean(taskRef.id()))
-                {
-                    System.out.println("Empty");
-                }
             }
-            catch (Exception e)
+            catch (CompilationException e)
             {
-                return null;
+                throw new CompilationException(
+                        CompilationErrorCode.MISSING_DEPENDENCY,
+                        ArtifactType.Challenge,
+                        taskId,
+                        taskVersion,
+                        "Reference Task not found "+taskId+"@"+taskVersion
+                );
             }
 
             compiledTaskRefs.add(new CompiledTaskRef(taskId, taskVersion));

@@ -1,5 +1,7 @@
 package com.banyan.compiler.backend.ruleset;
 
+import com.banyan.compiler.backend.api.CompilationErrorCode;
+import com.banyan.compiler.backend.api.CompilationException;
 import com.banyan.compiler.backend.api.CompilationMetadata;
 import com.banyan.compiler.backend.context.CompilationContext;
 import com.banyan.compiler.backend.spi.AbstractBackendCompiler;
@@ -26,7 +28,7 @@ public final class RuleSetBackendCompiler
 
         // -------- Case 1: Explicit expression --------
         if (spec.has("expression")) {
-            root = parseExpression(spec.get("expression"));
+            root = parseExpression(spec.get("expression"),context);
         }
         // -------- Case 2: Implicit single-rule ruleset --------
         else if (spec.has("ruleRef")) {
@@ -48,10 +50,29 @@ public final class RuleSetBackendCompiler
 
     // ---------------- Expression parsing ----------------
 
-    private RulesetExpression parseExpression(JsonNode expr) {
+    private RulesetExpression parseExpression(JsonNode expr,CompilationContext context) {
 
         // Leaf rule reference
         if (expr.has("ruleRef")) {
+            String ruleId = expr.get("ruleRef").asText();
+            int ruleVersion = expr.get("version").asInt();
+            try {
+                context.resolve(
+                        ArtifactType.Rule,
+                        ruleId,
+                        ruleVersion
+                );
+            }
+            catch(CompilationException e)
+            {
+                throw new CompilationException(
+                        CompilationErrorCode.MISSING_DEPENDENCY,
+                        ArtifactType.Ruleset,
+                        ruleId,
+                        ruleVersion,
+                        "Referenced Rule not found: " + ruleId + "@" + ruleVersion
+                );
+            }
             return new RuleRefNode(expr.get("ruleRef").asText());
         }
 
@@ -63,7 +84,7 @@ public final class RuleSetBackendCompiler
 
             List<RulesetExpression> operands = new ArrayList<>();
             for (JsonNode operand : expr.get("operands")) {
-                operands.add(parseExpression(operand));
+                operands.add(parseExpression(operand,context));
             }
 
             return new LogicalNode(operator, operands);

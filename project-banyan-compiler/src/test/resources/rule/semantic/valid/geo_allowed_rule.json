@@ -1,11 +1,11 @@
 {
   "kind": "Rule",
-  "id": "ip_not_blacklisted",
+  "id": "geo_allowed",
   "version": 1,
   "spec": {
     "evidenceTypeRef": {
       "id": "CONSOLIDATED_EVIDENCES",
-      "version": 8
+      "version": 2
     },
     "type": "EQUALITY",
     "input": "country",

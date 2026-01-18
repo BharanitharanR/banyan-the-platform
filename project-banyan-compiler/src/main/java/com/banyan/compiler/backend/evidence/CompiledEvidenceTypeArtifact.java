@@ -7,9 +7,9 @@ import com.banyan.compiler.enums.ArtifactType;
 
 import java.util.Map;
 
-public final class CompiledEvidenceTypeArtifact extends AbstractCompiledArtifact<Map<String,EvidenceField>> {
+public final class CompiledEvidenceTypeArtifact extends AbstractCompiledArtifact<CompiledEvidenceType> {
 
-    public CompiledEvidenceTypeArtifact(String id,int version,Map<String,EvidenceField> fields,CompilationMetadata metadata) {
+    public CompiledEvidenceTypeArtifact(String id,int version,CompiledEvidenceType fields,CompilationMetadata metadata) {
         super(id,version, ArtifactType.EvidenceType,fields,metadata);
     }
 

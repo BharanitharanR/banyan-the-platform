@@ -1,8 +1,12 @@
 {
   "kind": "Rule",
-  "id": "business_hours_only",
+  "id": "within_business_hours",
   "version": 2,
   "spec": {
+    "evidenceTypeRef": {
+      "id": "CONSOLIDATED_EVIDENCES",
+      "version": 1
+    },
     "type": "EQUALITY",
     "input": "businessHours",
     "operator": "==",

@@ -9,13 +9,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class EvidenceBackendCompiler extends AbstractBackendCompiler<CompiledEvidenceTypeArtifact> {
+
     @Override
-    public CompiledEvidenceTypeArtifact compile(JsonNode validatedDsl, CompilationContext context) {
+    public CompiledEvidenceTypeArtifact compile(
+            JsonNode validatedDsl,
+            CompilationContext context
+    ) {
         String id = readId(validatedDsl);
         int version = readVersion(validatedDsl);
-        Map<String, EvidenceField> fields = new LinkedHashMap<>();
         CompilationMetadata metadata = metadata(validatedDsl);
 
+        Map<String, EvidenceField> fields = new LinkedHashMap<>();
         for (JsonNode f : validatedDsl.at("/spec/fields")) {
             fields.put(
                     f.get("name").asText(),
@@ -26,7 +30,13 @@ public class EvidenceBackendCompiler extends AbstractBackendCompiler<CompiledEvi
                     )
             );
         }
-        return new CompiledEvidenceTypeArtifact(id,version,fields,metadata);
+
+        CompiledEvidenceType compiledType =
+                new CompiledEvidenceType(id, version, fields);
+
+        return new CompiledEvidenceTypeArtifact(
+                id, version, compiledType, metadata
+        );
     }
 
 

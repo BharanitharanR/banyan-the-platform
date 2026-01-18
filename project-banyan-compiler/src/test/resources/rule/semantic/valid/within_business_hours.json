@@ -1,11 +1,11 @@
 {
   "kind": "Rule",
-  "id": "ip_not_blacklisted",
+  "id": "within_business_hours",
   "version": 1,
   "spec": {
     "evidenceTypeRef": {
       "id": "CONSOLIDATED_EVIDENCES",
-      "version": 8
+      "version": 1
     },
     "type": "EQUALITY",
     "input": "country",

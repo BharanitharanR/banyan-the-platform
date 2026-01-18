@@ -18,7 +18,7 @@ import java.util.List;
  */
 public record CompiledTask(
         String ruleSetId,
-        String rulesetVersion,
+        Integer rulesetVersion,
         TaskResulTypeEnum taskType,
         List<TaskActionRecord> taskActions,
         String description

@@ -1,15 +1,15 @@
 {
   "kind": "Rule",
   "id": "ip_not_blacklisted",
-  "version": 1,
+  "version": 2,
   "spec": {
     "evidenceTypeRef": {
       "id": "CONSOLIDATED_EVIDENCES",
-      "version": 8
+      "version": 9
     },
     "type": "EQUALITY",
     "input": "country",
     "operator": "==",
-    "value": "IN"
+    "value": "CA"
   }
 }

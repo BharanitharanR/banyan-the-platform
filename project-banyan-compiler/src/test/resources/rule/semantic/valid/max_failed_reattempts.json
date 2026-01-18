@@ -1,11 +1,11 @@
 {
   "kind": "Rule",
-  "id": "max_failed_attempts",
+  "id": "max_incorrect_passwords_history_greater_than_three",
   "version": 1,
   "spec": {
     "evidenceTypeRef": {
       "id": "CONSOLIDATED_EVIDENCES",
-      "version": 7
+      "version": 5
     },
     "type": "THRESHOLD",
     "input": "failedAttempts",
