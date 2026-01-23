@@ -10,6 +10,9 @@ import com.banyan.compiler.backend.ruleset.CompiledRulesetArtifact;
 import com.banyan.compiler.backend.ruleset.RuleSetBackendCompiler;
 import com.banyan.compiler.backend.task.CompiledTaskArtifact;
 import com.banyan.compiler.backend.task.TaskBackendCompiler;
+import com.banyan.compiler.compatibility.bootstrap.CompilerBootstrapContext;
+import com.banyan.compiler.compatibility.bootstrap.CompilerBootstrapContextImpl;
+import com.banyan.compiler.compatibility.bootstrap.CompilerCompatibilityBootstrap;
 import com.banyan.compiler.enums.ArtifactType;
 import com.banyan.compiler.semantics.ChallengeSemanticValidator;
 import com.banyan.compiler.semantics.TaskSemanticValidator;
@@ -38,7 +41,8 @@ public class ChallengeBackendCompilerTest {
     static List<String> ruleSetJsons = new ArrayList<>();
     static List<String> ruleJsons = new ArrayList<>();
     static List<String> evidenceTypeJsons = new ArrayList<>();
-    static CompilationContext ctx = new CompilationContext();
+
+    static CompilationContext ctx = new CompilationContext(CompilerCompatibilityBootstrap.bootstrap());
 @BeforeAll
 static void register() throws JsonProcessingException {
 

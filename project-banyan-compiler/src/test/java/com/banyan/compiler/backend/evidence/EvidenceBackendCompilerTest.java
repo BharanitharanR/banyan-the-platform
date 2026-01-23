@@ -2,6 +2,8 @@ package com.banyan.compiler.backend.evidence;
 
 import com.banyan.compiler.backend.context.CompilationContext;
 import com.banyan.compiler.backend.spi.BackendCompiler;
+import com.banyan.compiler.compatibility.bootstrap.CompilerBootstrapContextImpl;
+import com.banyan.compiler.compatibility.bootstrap.CompilerCompatibilityBootstrap;
 import com.banyan.compiler.enums.ArtifactType;
 import com.banyan.compiler.semantics.EvidenceTypeSemanticValidator;
 import com.banyan.compiler.testutil.TestResourceLoader;
@@ -25,7 +27,7 @@ public class EvidenceBackendCompilerTest {
     public void compile_validEvidenceType_shouldProduceCompiledArtifact() throws JsonProcessingException {
         List<String> jsons =
                 TestResourceLoader.loadJsonFiles(VALID_RESOURCE);
-        CompilationContext ctx = new CompilationContext();
+        CompilationContext ctx = new CompilationContext(CompilerCompatibilityBootstrap.bootstrap());
         for (String json : jsons) {
             List<String> errors = validator.validate(json);
             assertTrue(errors.isEmpty(), "Expected no errors but got: " + errors);

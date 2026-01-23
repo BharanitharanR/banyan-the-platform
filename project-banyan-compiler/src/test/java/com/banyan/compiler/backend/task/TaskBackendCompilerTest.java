@@ -3,6 +3,8 @@ package com.banyan.compiler.backend.task;
 import com.banyan.compiler.backend.context.CompilationContext;
 import com.banyan.compiler.backend.ruleset.CompiledRulesetArtifact;
 import com.banyan.compiler.backend.ruleset.RuleSetBackendCompiler;
+import com.banyan.compiler.compatibility.bootstrap.CompilerBootstrapContextImpl;
+import com.banyan.compiler.compatibility.bootstrap.CompilerCompatibilityBootstrap;
 import com.banyan.compiler.enums.ArtifactType;
 import com.banyan.compiler.semantics.RuleSetSemanticValidator;
 import com.banyan.compiler.semantics.TaskSemanticValidator;
@@ -27,7 +29,7 @@ public class TaskBackendCompilerTest {
     public void compile_validtask_shouldProduceCompiledArtifact() throws JsonProcessingException {
         List<String> jsons =
                 TestResourceLoader.loadJsonFiles(VALID_RESOURCE);
-        CompilationContext ctx = new CompilationContext();
+        CompilationContext ctx = new CompilationContext(CompilerCompatibilityBootstrap.bootstrap());
         for (String json : jsons) {
             List<String> errors = validator.validate(json);
             assertTrue(errors.isEmpty(), "Expected no errors but got: " + errors);

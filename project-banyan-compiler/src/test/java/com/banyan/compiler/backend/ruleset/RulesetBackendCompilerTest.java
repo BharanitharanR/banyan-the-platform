@@ -3,6 +3,8 @@ package com.banyan.compiler.backend.ruleset;
 import com.banyan.compiler.backend.context.CompilationContext;
 import com.banyan.compiler.backend.rule.CompiledRuleArtifact;
 import com.banyan.compiler.backend.rule.RuleBackendCompiler;
+import com.banyan.compiler.compatibility.bootstrap.CompilerBootstrapContextImpl;
+import com.banyan.compiler.compatibility.bootstrap.CompilerCompatibilityBootstrap;
 import com.banyan.compiler.enums.ArtifactType;
 import com.banyan.compiler.semantics.RuleSemanticValidator;
 import com.banyan.compiler.semantics.RuleSetSemanticValidator;
@@ -26,7 +28,7 @@ public class RulesetBackendCompilerTest {
     public void compile_validRuleset_shouldProduceCompiledArtifact() throws JsonProcessingException {
         List<String> jsons =
                 TestResourceLoader.loadJsonFiles(VALID_RESOURCE);
-        CompilationContext ctx = new CompilationContext();
+        CompilationContext ctx = new CompilationContext(CompilerCompatibilityBootstrap.bootstrap());
         for (String json : jsons) {
             List<String> errors = validator.validate(json);
             assertTrue(errors.isEmpty(), "Expected no errors but got: " + errors);

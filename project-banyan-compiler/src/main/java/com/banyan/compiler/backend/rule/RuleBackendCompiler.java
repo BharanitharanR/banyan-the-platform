@@ -6,6 +6,7 @@ import com.banyan.compiler.backend.context.CompilationContext;
 import com.banyan.compiler.backend.evidence.CompiledEvidenceTypeArtifact;
 import com.banyan.compiler.backend.evidence.EvidenceField;
 import com.banyan.compiler.backend.spi.AbstractBackendCompiler;
+import com.banyan.compiler.compatibility.bootstrap.CompatibilityResolver;
 import com.banyan.compiler.enums.ArtifactType;
 import com.banyan.compiler.enums.EvidenceValueType;
 import com.banyan.compiler.enums.RuleType;
@@ -33,6 +34,10 @@ public class RuleBackendCompiler extends AbstractBackendCompiler<CompiledRuleArt
                         evidenceId,
                         evidenceVersion
                 );
+        CompatibilityResolver<RuleType, EvidenceValueType> resolver =
+                context.compatibility(RuleType.class, EvidenceValueType.class);
+
+
 
         Map<String, EvidenceField> fields = evidenceArtifact.payload().fields();
 
@@ -47,19 +52,20 @@ public class RuleBackendCompiler extends AbstractBackendCompiler<CompiledRuleArt
             );
         }
 
-        // 3. Validate type matches EXACTLY
-        EvidenceValueType declaredType =
-                EvidenceValueType.valueOf(spec.at("/type").asText());
 
-        if (field.type() != declaredType) {
+        // 3. Validate type matches EXACTLY
+        RuleType declaredType =
+                RuleType.valueOf(spec.at("/type").asText());
+
+
+        if (!resolver.isCompatible(declaredType,field.type())) {
             throw new CompilationException(
-                    CompilationErrorCode.INTERNAL_COMPILER_ERROR,
-                    "Rule type '" + declaredType
-                            + "' does not match EvidenceType field type '"
-                            + field.type() + "' for field '" + input + "'"
+                    CompilationErrorCode.CONTEXT_CORRUPTED,
+                    declaredType + " not compatible with " + field.type()
             );
-        }
-            ;
+        } ;
+
+
         return new CompiledRuleArtifact(id,version,    new CompiledRule(
                 input,
                 spec.get("operator").asText(),

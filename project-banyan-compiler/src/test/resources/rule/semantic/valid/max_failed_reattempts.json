@@ -5,7 +5,7 @@
   "spec": {
     "evidenceTypeRef": {
       "id": "CONSOLIDATED_EVIDENCES",
-      "version": 5
+      "version": 1
     },
     "type": "THRESHOLD",
     "input": "failedAttempts",
