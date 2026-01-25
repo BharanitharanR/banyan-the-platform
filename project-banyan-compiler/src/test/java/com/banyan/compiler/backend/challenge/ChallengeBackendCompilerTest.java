@@ -2,6 +2,8 @@ package com.banyan.compiler.backend.challenge;
 
 import com.banyan.compiler.backend.api.CompiledArtifact;
 import com.banyan.compiler.backend.context.CompilationContext;
+import com.banyan.compiler.backend.emitter.ArtifactEmitter;
+import com.banyan.compiler.backend.emitter.ZipEmitter;
 import com.banyan.compiler.backend.evidence.CompiledEvidenceTypeArtifact;
 import com.banyan.compiler.backend.evidence.EvidenceBackendCompiler;
 import com.banyan.compiler.backend.outcome.CompilationOutcome;
@@ -123,6 +125,9 @@ static void register() throws JsonProcessingException {
                System.out.println(artifact.version()+":"+artifact.id()+":"+artifact.type().toString());
            }
        }
+
+        ArtifactEmitter emitter = new ZipEmitter();
+       emitter.emit(outcome);
 
     }
 }
