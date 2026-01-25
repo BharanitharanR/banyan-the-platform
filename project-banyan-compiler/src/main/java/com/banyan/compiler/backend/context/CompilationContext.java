@@ -6,6 +6,7 @@ import com.banyan.compiler.backend.api.CompiledArtifact;
 import com.banyan.compiler.compatibility.bootstrap.CompatibilityResolver;
 import com.banyan.compiler.compatibility.bootstrap.CompilerBootstrapContext;
 import com.banyan.compiler.enums.ArtifactType;
+import com.banyan.compiler.enums.CompilationMode;
 import com.banyan.compiler.enums.CompilationState;
 
 import com.banyan.compiler.enums.SymbolKey;
@@ -21,11 +22,11 @@ public class CompilationContext {
     private final Map<SymbolKey, CompiledArtifact> symbolTable= new HashMap<>();
     private final CompilerBootstrapContext compatibility;
     private CompilationState state;
+    // private final CompilationMode mode;
     public CompilationContext(CompilerBootstrapContext compatibility) {
         this.compatibility = compatibility;
         this.state = CompilationState.RUNNING;
     }
-
     public <A, B> CompatibilityResolver<A, B> compatibility(
             Class<A> left,
             Class<B> right
@@ -33,12 +34,8 @@ public class CompilationContext {
         return compatibility.compatibility(left, right);
     }
 
-    public void register(CompiledArtifact artifact){
-        if (assertFreeze())
-            throw new CompilationException(
-                    CompilationErrorCode.CONTEXT_FREEZE,
-                    artifact.type().toString()
-            );
+    public void register(CompiledArtifact artifact) {
+        assertRunning();
         symbolTable.put(new SymbolKey(artifact.type(),artifact.id(),artifact.version()),artifact);
     }
 
@@ -46,7 +43,6 @@ public class CompilationContext {
     {
         CompiledArtifact artifact =
                 symbolTable.get(new SymbolKey(type, id, version));
-
         if (artifact == null) {
             throw new CompilationException(
                     CompilationErrorCode.MISSING_DEPENDENCY,
@@ -56,9 +52,16 @@ public class CompilationContext {
         return artifact;
     }
 
-    private boolean assertFreeze() {
-        return !( this.state== CompilationState.RUNNING);
+    private void  assertRunning() {
+        if ( this.state!= CompilationState.RUNNING)
+        {
+            throw new CompilationException(
+                    CompilationErrorCode.CONTEXT_FREEZE,
+                   "No registrations allowed after freeze");
+        }
     }
 
-    public void freeze(){ this.state = CompilationState.COMPLETED;}
+    public void freeze() {
+        this.state = CompilationState.COMPLETED;
+    }
 }

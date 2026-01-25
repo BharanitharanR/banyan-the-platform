@@ -1,5 +1,6 @@
 package com.banyan.compiler.backend.task;
 
+import com.banyan.compiler.backend.api.ArtifactReference;
 import com.banyan.compiler.backend.api.CompilationErrorCode;
 import com.banyan.compiler.backend.api.CompilationException;
 import com.banyan.compiler.backend.api.CompilationMetadata;
@@ -11,6 +12,7 @@ import com.banyan.compiler.enums.TaskActionEnum;
 import com.banyan.compiler.enums.TaskResulTypeEnum;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -34,7 +36,7 @@ import java.util.List;
 public final class TaskBackendCompiler extends AbstractBackendCompiler<CompiledTaskArtifact> {
     @Override
     public CompiledTaskArtifact compile(JsonNode validatedDsl, CompilationContext context) {
-
+        List<ArtifactReference> dependencies = new ArrayList<>();
         String id = readId(validatedDsl);
         int version = readVersion(validatedDsl);
         CompilationMetadata metadata = metadata(validatedDsl);
@@ -54,6 +56,7 @@ public final class TaskBackendCompiler extends AbstractBackendCompiler<CompiledT
             JsonNode actions = spec.at("/actions");
             String description = spec.at("/description").asText();
             int rulesetVersion = spec.at("/rulesetRef/version").asInt();
+
             // HARD dependency check
                 try {
                     context.resolve(
@@ -75,9 +78,9 @@ public final class TaskBackendCompiler extends AbstractBackendCompiler<CompiledT
 
                 actionsList.add(new TaskActionRecord(TaskActionEnum.valueOf(action.at("/on").asText()),action.at("/emit").asText()));
             }
-
+        dependencies.add(new ArtifactReference(ArtifactType.Ruleset,rulesetRef,rulesetVersion));
         return  new CompiledTaskArtifact(
-                id,version,new CompiledTask(rulesetRef,rulesetVersion,type,actionsList,description),metadata);
+                id,version,new CompiledTask(rulesetRef,rulesetVersion,type,actionsList,description),metadata,dependencies);
 
     }
 }

@@ -1,8 +1,12 @@
 package com.banyan.compiler.backend.challenge;
 
+import com.banyan.compiler.backend.api.CompiledArtifact;
 import com.banyan.compiler.backend.context.CompilationContext;
 import com.banyan.compiler.backend.evidence.CompiledEvidenceTypeArtifact;
 import com.banyan.compiler.backend.evidence.EvidenceBackendCompiler;
+import com.banyan.compiler.backend.outcome.CompilationOutcome;
+import com.banyan.compiler.backend.outcome.CompilationOutcomeBuilder;
+import com.banyan.compiler.backend.outcome.CompilationRoot;
 import com.banyan.compiler.backend.rule.CompiledRule;
 import com.banyan.compiler.backend.rule.CompiledRuleArtifact;
 import com.banyan.compiler.backend.rule.RuleBackendCompiler;
@@ -46,7 +50,7 @@ public class ChallengeBackendCompilerTest {
 @BeforeAll
 static void register() throws JsonProcessingException {
 
-     jsons= TestResourceLoader.loadJsonFiles(VALID_RESOURCE);
+    jsons= TestResourceLoader.loadJsonFiles(VALID_RESOURCE);
     taskJsons = TestResourceLoader.loadJsonFiles(TASK_VALID_RESOURCE);
     ruleSetJsons = TestResourceLoader.loadJsonFiles(RULESET_VALID_RESOURCE);
     ruleJsons = TestResourceLoader.loadJsonFiles(RULE_VALID_RESOURCE);
@@ -72,7 +76,6 @@ static void register() throws JsonProcessingException {
         System.out.println("Rule: "+json);
         CompiledRuleArtifact compileEvidence = compiler.compile(mapper.readTree(json), ctx);
         ctx.register(compileEvidence);
-        ;
     }
     // Ruleset Registration
     for (String json : ruleSetJsons) {
@@ -80,14 +83,12 @@ static void register() throws JsonProcessingException {
         System.out.println("Ruleset: "+json);
         CompiledRulesetArtifact compileEvidence = compiler.compile(mapper.readTree(json), ctx);
         ctx.register(compileEvidence);
-        ;
     }
     //Task Registration
     for (String json : taskJsons) {
         TaskBackendCompiler compiler = new TaskBackendCompiler();
         System.out.println("Task: "+json);
         CompiledTaskArtifact compileEvidence = compiler.compile(mapper.readTree(json), ctx);
-        ;
         ctx.register(compileEvidence);
      
     }
@@ -95,8 +96,6 @@ static void register() throws JsonProcessingException {
 }
     @Test
     public void compile_validChallenge_shouldProduceCompiledArtifact() throws JsonProcessingException {
-
-
         for (String json : jsons) {
             List<String> errors = validator.validate(json);
             assertTrue(errors.isEmpty(), "Expected no errors but got: " + errors);
@@ -111,5 +110,19 @@ static void register() throws JsonProcessingException {
         System.out.println(ctx.resolve(ArtifactType.Challenge,"unique_task_challenge",1).payload().toString());
         assertEquals("unique_task_challenge",ctx.resolve(ArtifactType.Challenge,"unique_task_challenge",1).id());
         ctx.freeze();
+        CompilationOutcomeBuilder builder  = new CompilationOutcomeBuilder(ctx,new CompilationRoot(
+                ArtifactType.Challenge,
+                "unique_task_challenge",
+                1
+        ));
+       CompilationOutcome outcome = builder.build();
+       if(outcome.isSuccess())
+       {
+           for(CompiledArtifact<?> artifact: outcome.getReachableArtifacts())
+           {
+               System.out.println(artifact.version()+":"+artifact.id()+":"+artifact.type().toString());
+           }
+       }
+
     }
 }

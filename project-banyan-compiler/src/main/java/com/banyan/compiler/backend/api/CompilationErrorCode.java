@@ -18,5 +18,8 @@ public enum CompilationErrorCode {
     // CONTEXT_FREEZE
     CONTEXT_FREEZE,
     // Catch-all
-    INTERNAL_COMPILER_ERROR
+    INTERNAL_COMPILER_ERROR,
+
+    // LINKER_ERROS
+    LINKING_ERROR
 }

@@ -2,6 +2,8 @@ package com.banyan.compiler.backend.api;
 
 import com.banyan.compiler.enums.ArtifactType;
 
+import java.util.List;
+
 public abstract class AbstractCompiledArtifact<T>
         implements CompiledArtifact<T> {
 
@@ -10,19 +12,22 @@ public abstract class AbstractCompiledArtifact<T>
     private final ArtifactType type;
     private final T payload;
     private final CompilationMetadata metadata;
+    private final List<ArtifactReference> dependencies;
 
     protected AbstractCompiledArtifact(
             String id,
             int version,
             ArtifactType type,
             T payload,
-            CompilationMetadata metadata
+            CompilationMetadata metadata,
+            List<ArtifactReference> dependencies
     ) {
         this.id = id;
         this.version = version;
         this.type = type;
         this.payload = payload;
         this.metadata = metadata;
+        this.dependencies = dependencies;
     }
 
     @Override
@@ -49,4 +54,11 @@ public abstract class AbstractCompiledArtifact<T>
     public T payload() {
         return payload;
     }
+
+    @Override
+    public List<ArtifactReference> dependencies()
+    {
+        return this.dependencies;
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.banyan.compiler.backend.ruleset;
 
+import com.banyan.compiler.backend.api.ArtifactReference;
 import com.banyan.compiler.backend.api.CompilationErrorCode;
 import com.banyan.compiler.backend.api.CompilationException;
 import com.banyan.compiler.backend.api.CompilationMetadata;
@@ -15,6 +16,7 @@ import java.util.List;
 public final class RuleSetBackendCompiler
             extends AbstractBackendCompiler<CompiledRulesetArtifact> {
 
+    private final List<ArtifactReference> dependencies = new ArrayList<>();
     @Override
     public CompiledRulesetArtifact compile(JsonNode dsl, CompilationContext context) {
 
@@ -44,7 +46,8 @@ public final class RuleSetBackendCompiler
                 id,
                 version,
                 new CompiledRuleset(root),
-                metadata
+                metadata,
+                this.dependencies
         );
     }
 
@@ -57,11 +60,17 @@ public final class RuleSetBackendCompiler
             String ruleId = expr.get("ruleRef").asText();
             int ruleVersion = expr.get("version").asInt();
             try {
+
                 context.resolve(
                         ArtifactType.Rule,
                         ruleId,
                         ruleVersion
                 );
+                this.dependencies.add(new ArtifactReference(
+                        ArtifactType.Rule,
+                        ruleId,
+                        ruleVersion
+                ));
             }
             catch(CompilationException e)
             {

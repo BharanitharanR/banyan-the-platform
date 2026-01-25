@@ -1,9 +1,6 @@
 package com.banyan.compiler.backend.challenge;
 
-import com.banyan.compiler.backend.api.CompilationErrorCode;
-import com.banyan.compiler.backend.api.CompilationException;
-import com.banyan.compiler.backend.api.CompilationMetadata;
-import com.banyan.compiler.backend.api.CompiledArtifact;
+import com.banyan.compiler.backend.api.*;
 import com.banyan.compiler.backend.context.CompilationContext;
 import com.banyan.compiler.backend.evidence.CompiledEvidenceTypeArtifact;
 import com.banyan.compiler.backend.spi.AbstractBackendCompiler;
@@ -35,6 +32,7 @@ public class ChallengeBackendCompiler extends AbstractBackendCompiler<CompiledCh
             );
         }
         List<CompiledTaskRef> compiledTaskRefs = new ArrayList<>();
+        List<ArtifactReference> artifactReferences = new ArrayList<>();
         JsonNode TaskRefs = spec.get("tasks");
         for(JsonNode TaskRef: TaskRefs)
         {
@@ -60,9 +58,10 @@ public class ChallengeBackendCompiler extends AbstractBackendCompiler<CompiledCh
             }
 
             compiledTaskRefs.add(new CompiledTaskRef(taskId, taskVersion));
+            artifactReferences.add(new ArtifactReference(ArtifactType.Task,taskId,taskVersion));
         }
         return new CompiledChallengeArtifact(
-                id,version,new CompiledChallenge(compiledTaskRefs),metadata
+                id,version,new CompiledChallenge(compiledTaskRefs),metadata,artifactReferences
         );
     }
 }

@@ -1,4 +1,5 @@
 package com.banyan.compiler.backend.rule;
+import com.banyan.compiler.backend.api.ArtifactReference;
 import com.banyan.compiler.backend.api.CompilationErrorCode;
 import com.banyan.compiler.backend.api.CompilationException;
 import com.banyan.compiler.backend.api.CompilationMetadata;
@@ -12,10 +13,13 @@ import com.banyan.compiler.enums.EvidenceValueType;
 import com.banyan.compiler.enums.RuleType;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RuleBackendCompiler extends AbstractBackendCompiler<CompiledRuleArtifact> {
+    private List<ArtifactReference> dependencies = new ArrayList<>();
     @Override
     public CompiledRuleArtifact compile(JsonNode dsl, CompilationContext context) {
         String id = readId(dsl);
@@ -34,6 +38,13 @@ public class RuleBackendCompiler extends AbstractBackendCompiler<CompiledRuleArt
                         evidenceId,
                         evidenceVersion
                 );
+        dependencies.add(
+          new ArtifactReference(
+                  ArtifactType.EvidenceType,
+                  evidenceId,
+                  evidenceVersion
+          )
+        );
         CompatibilityResolver<RuleType, EvidenceValueType> resolver =
                 context.compatibility(RuleType.class, EvidenceValueType.class);
 
@@ -71,7 +82,7 @@ public class RuleBackendCompiler extends AbstractBackendCompiler<CompiledRuleArt
                 spec.get("operator").asText(),
                 extractValue(spec.get("value")),
                 spec.get("type").asText()
-        ),metadata);
+        ),metadata,dependencies);
     }
 
     private Object extractValue(JsonNode node) {
