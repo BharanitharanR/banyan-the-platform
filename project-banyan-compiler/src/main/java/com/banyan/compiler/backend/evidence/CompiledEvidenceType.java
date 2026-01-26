@@ -1,10 +1,18 @@
 package com.banyan.compiler.backend.evidence;
 
 import com.banyan.compiler.backend.evidence.EvidenceField;
+import com.banyan.compiler.backend.ruleset.CompiledRulesetSerializer;
+import com.banyan.compiler.backend.ruleset.LogicalNode;
+import com.banyan.compiler.backend.ruleset.RuleRefNode;
 import com.banyan.compiler.enums.EvidenceValueType;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.Map;
 
+
+@JsonSerialize(using = CompiledEvidenceTypeSerializer.class)
 public final class CompiledEvidenceType {
 
     private final String id;

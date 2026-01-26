@@ -1,9 +1,10 @@
 package com.banyan.compiler.backend.api;
 
 import com.banyan.compiler.enums.ArtifactType;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.util.List;
-
+@JsonSerialize(using=CompiledArtifactSerializer.class)
 public abstract class AbstractCompiledArtifact<T>
         implements CompiledArtifact<T> {
 

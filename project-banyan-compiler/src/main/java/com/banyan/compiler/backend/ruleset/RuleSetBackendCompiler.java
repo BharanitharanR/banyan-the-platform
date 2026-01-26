@@ -34,7 +34,7 @@ public final class RuleSetBackendCompiler
         }
         // -------- Case 2: Implicit single-rule ruleset --------
         else if (spec.has("ruleRef")) {
-            root = new RuleRefNode(spec.get("ruleRef").asText());
+            root = new RuleRefNode(spec.get("ruleRef").asText(),spec.get("version").asInt());
         }
         else {
             throw new IllegalStateException(
@@ -82,7 +82,7 @@ public final class RuleSetBackendCompiler
                         "Referenced Rule not found: " + ruleId + "@" + ruleVersion
                 );
             }
-            return new RuleRefNode(expr.get("ruleRef").asText());
+            return new RuleRefNode(expr.get("ruleRef").asText(),expr.get("version").asInt());
         }
 
         // Composite node
