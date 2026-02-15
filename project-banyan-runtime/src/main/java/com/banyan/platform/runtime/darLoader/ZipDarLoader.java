@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import com.banyan.compiler.backend.api.CompiledArtifact;
 import com.banyan.compiler.backend.challenge.CompiledChallenge;
 import com.banyan.compiler.backend.challenge.CompiledChallengeArtifact;
 import com.banyan.compiler.backend.evidence.CompiledEvidenceType;
@@ -18,9 +17,9 @@ import com.banyan.compiler.backend.rule.CompiledRuleArtifact;
 import com.banyan.compiler.backend.ruleset.CompiledRuleset;
 import com.banyan.compiler.backend.ruleset.CompiledRulesetArtifact;
 import com.banyan.compiler.backend.task.CompiledTask;
-import com.banyan.compiler.backend.task.CompiledTaskArtifact;
 
-import com.banyan.platform.runtime.CompiledChallengeArtifactDeserializer;
+import com.banyan.compiler.backend.task.CompiledTaskArtifact;
+import com.banyan.platform.artifact.deserializer.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -47,58 +46,65 @@ public final class ZipDarLoader {
     public record EvidenceTypeKey(int version, String name) {
     }
 
-    public static void load(String darPath) throws Exception {
+    public static Map<ChallengeKey, CompiledChallenge> challenges = new HashMap<>();
+    public static Map<TaskKey, CompiledTask> tasks = new HashMap<>();
+    public static Map<RulesetKey, CompiledRuleset> rulesets = new HashMap<>();
+    public static Map<RuleKey, CompiledRule> rules = new HashMap<>();
+    public static Map<EvidenceTypeKey, CompiledEvidenceType> evidenceTypes = new HashMap<>();
 
-        Map<ChallengeKey, CompiledChallenge> challenges = new HashMap<>();
-        Map<TaskKey, CompiledTask> tasks = new HashMap<>();
-        Map<RulesetKey, CompiledRuleset> rulesets = new HashMap<>();
-        Map<RuleKey, CompiledRule> rules = new HashMap<>();
-        Map<EvidenceTypeKey, CompiledEvidenceType> evidenceTypes = new HashMap<>();
+    public static void load(String darPath) throws Exception {
 
         try (ZipFile zip = new ZipFile(darPath)) {
             Enumeration<? extends ZipEntry> entries = zip.entries();
-
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (entry.isDirectory()) continue;
-
                 String name = entry.getName();
                 InputStream in = zip.getInputStream(entry);
-                CompiledChallengeArtifactDeserializer CHALLENGE =
-                        new CompiledChallengeArtifactDeserializer(mapper);
+                CompiledChallengeArtifactDeserializer CHALLENGE = new CompiledChallengeArtifactDeserializer(mapper);
+                CompiledTaskArtifactDeserializer TASK = new CompiledTaskArtifactDeserializer(mapper);
+                CompiledRulesetArtifactDeserializer RULESET = new CompiledRulesetArtifactDeserializer(mapper);
+                CompiledRuleArtifactDeserializer RULE = new CompiledRuleArtifactDeserializer(mapper);
+                CompiledEvidenceTypeArtifactDeserializer EVIDENCETYPE = new CompiledEvidenceTypeArtifactDeserializer(mapper);
                 if (name.startsWith("Challenge/")) {
                     LOGGER.info(name);
                     JsonNode names = mapper.readTree(in);
-                    //CompiledArtifact<CompiledChallenge> c = mapper.readValue(in, CompiledChallengeArtifact.class);
                     CompiledChallengeArtifact artifact = CHALLENGE.deserialize(names);
-
                     artifact.dependencies().forEach(task->{System.out.println(task.id()+task.type()+task.version());});
-                    // challenges.put(new ChallengeKey(c.compiledTaskRefsList().), c);
+                    challenges.put(new ChallengeKey(artifact.version(),artifact.id()),artifact.payload());
                 } else if (name.startsWith("Task/")) {
-                   // CompiledArtifact<CompiledTask> t = mapper.readValue(in, CompiledTaskArtifact.class);
-                    //CompiledChallengeArtifact artifact =
-                    //        ArtifactObjectMapper.mapper()
-                     //               .readValue(in, CompiledChallengeArtifact.class);
-                    //LOGGER.info(String.valueOf(artifact.version()));
-                    // tasks.put(new TaskKey(t.version(), t.name()), t);
-                } else if (name.startsWith("Ruleset/")) {
-                  //  CompiledArtifact<CompiledRuleset> r = mapper.readValue(in, CompiledRulesetArtifact.class);
-                    // rulesets.put(new RulesetKey(r.version(), r.name()), r);
-                } else if (name.startsWith("Rule/")) {
-                    //CompiledArtifact<CompiledRule> r = mapper.readValue(in, CompiledRuleArtifact.class);
+                    LOGGER.info(name);
+                    JsonNode names = mapper.readTree(in);
+                    CompiledTaskArtifact artifact = TASK.deserialize(names);
+                    artifact.dependencies().forEach(task->{System.out.println(task.id()+task.type()+task.version());});
+                    tasks.put(new TaskKey(artifact.version(), artifact.id()),artifact.payload());
 
-                    // rules.put(new RuleKey(r.version(), r.name()), r);
+                } else if (name.startsWith("Ruleset/")) {
+                    LOGGER.info(name);
+                    JsonNode names = mapper.readTree(in);
+                    CompiledRulesetArtifact artifact = RULESET.deserialize(names);
+                    artifact.dependencies().forEach(task->{System.out.println(task.id()+task.type()+task.version());});
+                    rulesets.put(new RulesetKey(artifact.version(), artifact.id()),artifact.payload());
+                } else if (name.startsWith("Rule/")) {
+                    LOGGER.info(name);
+                    JsonNode names = mapper.readTree(in);
+                    CompiledRuleArtifact artifact = RULE.deserialize(names);
+                    artifact.dependencies().forEach(task->{System.out.println(task.id()+task.type()+task.version());});
+                    rules.put(new RuleKey(artifact.version(), artifact.id()),artifact.payload());
                 } else if (name.startsWith("EvidenceType/")) {
-                   // CompiledArtifact<CompiledEvidenceType> e = mapper.readValue(in, CompiledEvidenceTypeArtifact.class);
-                    //LOGGER.info(e.id());
-                    //evidenceTypes.put(new EvidenceTypeKey(e.version(), e.name()), e);
+                    LOGGER.info(name);
+                    JsonNode names = mapper.readTree(in);
+                    CompiledEvidenceTypeArtifact artifact = EVIDENCETYPE.deserialize(names);
+                    artifact.dependencies().forEach(task->{System.out.println(task.id()+task.type()+task.version());});
+                    evidenceTypes.put(new EvidenceTypeKey(artifact.version(), artifact.id()),artifact.payload());
                 }
             }
         }
     }
 
     public static void main(String args[]) throws Exception {
-
         ZipDarLoader.load("/Users/bharani/Documents/task-challenge-backend/project-banyan-runtime/src/main/resources/compilation_package.dar");
+        if(ZipDarLoader.challenges.isEmpty())
+            LOGGER.info("No data");
     }
 }
