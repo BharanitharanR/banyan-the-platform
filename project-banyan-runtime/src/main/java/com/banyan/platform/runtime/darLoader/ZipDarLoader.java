@@ -19,7 +19,8 @@ import com.banyan.compiler.backend.ruleset.CompiledRulesetArtifact;
 import com.banyan.compiler.backend.task.CompiledTask;
 
 import com.banyan.compiler.backend.task.CompiledTaskArtifact;
-import com.banyan.platform.artifact.deserializer.*;
+import com.banyan.platform.deserializer.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

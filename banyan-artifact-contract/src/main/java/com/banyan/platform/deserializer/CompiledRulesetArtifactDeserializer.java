@@ -1,15 +1,14 @@
-package com.banyan.platform.artifact.deserializer;
+package com.banyan.platform.deserializer;
+
 import com.banyan.compiler.backend.api.ArtifactReference;
 import com.banyan.compiler.backend.api.CompilationMetadata;
-import com.banyan.compiler.backend.challenge.CompiledChallenge;
-import com.banyan.compiler.backend.challenge.CompiledTaskRef;
-import com.banyan.compiler.backend.rule.CompiledRule;
 import com.banyan.compiler.backend.ruleset.CompiledRuleset;
 import com.banyan.compiler.backend.ruleset.CompiledRulesetArtifact;
 import com.banyan.compiler.backend.ruleset.RulesetExpression;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 /*
 {

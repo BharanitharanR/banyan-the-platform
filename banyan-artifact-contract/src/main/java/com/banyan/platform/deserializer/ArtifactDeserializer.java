@@ -1,4 +1,4 @@
-package com.banyan.platform.artifact.deserializer;
+package com.banyan.platform.deserializer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
