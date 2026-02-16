@@ -1,66 +1,81 @@
-# project-banyan
+# Banyan Runtime
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+The **Banyan Runtime** executes compiled governance artifacts (DARs) deterministically. It evaluates
+compiled challenges against supplied evidence and produces replayable results. This module is an
+in-process Java library that focuses on **pure, deterministic evaluation** and **runtime isolation**
+from DSL semantics (all interpretation happens in the compiler).
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Goals
 
-## Running the application in dev mode
+- **DAR-only execution**: runtime consumes compiled artifacts, never raw DSL.
+- **Determinism**: same DAR + evidence → same result every time.
+- **Statelessness**: no persistence, no side effects.
+- **Pure evaluation**: evidence is trusted and compiler-validated.
 
-You can run your application in dev mode that enables live coding using:
+## What This Module Contains
 
-```shell script
-./mvnw quarkus:dev
+| Area | Key Types | Responsibility |
+| --- | --- | --- |
+| DAR loading | `ZipDarLoader` | Reads compiled DAR archives into a `DarRuntimeContext`. |
+| Runtime context | `DarRuntimeContext`, `DarRuntimeStore` | Immutable access to compiled challenges, rulesets, rules, and evidence types. |
+| AST materialization | `AstBuilder` | Builds an executable AST from compiled rulesets. |
+| Execution nodes | `ExecutableNode`, `LogicalExecutableNode`, `RuleExecutableNode` | Deterministic evaluation of logical and rule nodes. |
+| Evidence handling | `EvidenceContext` | Provides evidence values during evaluation. |
+| Error handling | `MissingEvidenceException`, `InvalidEvidenceTypeException` | Fail-fast runtime exceptions. |
+
+## Architecture Overview
+
+```
+DAR (.dar) ──▶ ZipDarLoader ──▶ DarRuntimeContext
+                           └──▶ AstBuilder ──▶ ExecutableNode tree
+                                           └──▶ evaluate(EvidenceContext)
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+The runtime is designed to be **embeddable**, **testable**, and **replayable**. It never mutates state
+and never attempts to infer semantics beyond what is encoded in the compiled artifact.
 
-## Packaging and running the application
+## Usage (Runtime Flow)
 
-The application can be packaged using:
+```java
+var context = ZipDarLoader.load("/path/to/compilation_package.dar");
+var astBuilder = new AstBuilder(context);
 
-```shell script
-./mvnw package
+var rulesetKey = new DarRuntimeContext.RulesetKey(version, rulesetId);
+ExecutableNode executable = astBuilder.build(rulesetKey);
+
+EvidenceContext evidence = new EvidenceContext(Map.of(
+    "failed_attempts", 2,
+    "business_hours", true
+));
+
+boolean result = executable.evaluate(evidence);
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+> **Note:** Evidence is assumed to be compiler-validated. Missing or invalid evidence causes
+> runtime exceptions such as `MissingEvidenceException`.
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
+## Development
 
-If you want to build an _über-jar_, execute the following command:
+### Build
 
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+```bash
+./mvnw -pl project-banyan-runtime -am clean package
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+### Test
 
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
+```bash
+./mvnw -pl project-banyan-runtime test
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
+## References
 
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
+- Runtime MVP design: [`docs/Banyan-runtime-MVP.md`](docs/Banyan-runtime-MVP.md)
+- DAR specification: [`docs/DAR_SPEC.md`](../docs/DAR_SPEC.md)
 
-You can then execute your native executable with: `./target/project-banyan-1.0.0-SNAPSHOT-runner`
+## Non-Negotiable Invariants
 
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
-
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-
-## Provided Code
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+1. DAR is the only executable input.
+2. Evaluation is a pure function of `(DAR, ChallengeId, Evidence)`.
+3. Execution is deterministic and stateless.
+4. Runtime never interprets governance semantics.
