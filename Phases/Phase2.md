@@ -311,16 +311,3 @@ If not done by then:
 3. If lint rules become mandatory correctness checks → stop
 4. If error handling feels complex → simplify DSL
 
----
-
-## What Phase 2 Proves (Career Impact)
-
-Phase 2 demonstrates that you can:
-
-* Design compiler pipelines
-* Separate structure, correctness, and quality
-* Enforce semantics without overreach
-* Preserve architectural boundaries
-* Build platforms others can safely extend
-
-This is **Staff / Principal-level capability**.
