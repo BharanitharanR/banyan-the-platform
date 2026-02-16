@@ -18,7 +18,7 @@ public class AstBuilderTest {
         try {
             // 1. Load DAR
             DarRuntimeContext context =
-                    ZipDarLoader.load("/Users/bharani/Documents/task-challenge-backend/project-banyan-runtime/src/main/resources/compilation_package.dar");
+                    ZipDarLoader.load("./src/main/resources/compilation_package.dar");
             // 2. Pick the only ruleset
             DarRuntimeContext.RulesetKey key = null;
 
@@ -56,7 +56,7 @@ public class AstBuilderTest {
 void goodDriver() throws Exception {
 
     DarRuntimeContext context =
-            ZipDarLoader.load("/Users/bharani/Documents/task-challenge-backend/target/compilation_package.dar");
+            ZipDarLoader.load("./src/main/resources/compilation_driving_package.dar");
 
     var key = context.rulesets().iterator().next().getKey();
 

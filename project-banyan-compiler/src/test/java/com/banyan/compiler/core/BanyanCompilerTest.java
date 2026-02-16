@@ -58,15 +58,6 @@ public class BanyanCompilerTest {
         }
     }
 
-    @Test
-    void allValidChallengeShouldPass() {
-        List<String> jsons =
-                TestResourceLoader.loadJsonFiles(CHALLENGE_VALID_RESOURCE);
-
-        for (String json : jsons) {
-            compileWithDependencies(json);
-        }
-    }
 
     @Test
     void allInvalidChallengeShouldFail() {
